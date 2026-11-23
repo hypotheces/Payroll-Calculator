@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payroll Calculator</title>
+<!-- Payroll Calculator. Designed and built by Princes Joy Garcia. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Inter:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #000000;
+    --fg: #f2f2f0;
+    --muted: #a3a3a0;
+    --line: rgba(255, 255, 255, 0.5);
+    --pill: #dcdcda;
+    --ink: #000000;
+    --err: #ff8a8a;
+    --display: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+    --body: "Inter", "Helvetica Neue", Arial, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { position: relative; overflow-x: clip; }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    position: relative;
+  }
+  h1, h2, h3 { font-family: var(--display); font-weight: 300; text-transform: uppercase; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: inherit; }
+  button, input { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+
+  /* nav */
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 28px; position: relative; z-index: 3; }
+  .logo { font-family: var(--display); font-weight: 500; font-size: 1.15rem; text-decoration: none; }
+  .links { display: flex; gap: clamp(14px, 4vw, 40px); font-size: 0.8rem; }
+  .links a { text-decoration: none; color: var(--muted); }
+  .links a:hover { color: var(--fg); }
+
+  /* pills */
+  .pill-row { display: inline-flex; align-items: center; gap: 6px; }
+  .pill {
+    font: 500 0.8rem var(--body);
+    background: var(--pill); color: var(--ink);
+    border: 0; border-radius: 999px; padding: 0.7rem 1.6rem;
+    cursor: pointer; text-decoration: none; display: inline-block;
+  }
+  .pill:hover { background: #fff; }
+  .pill.sm { padding: 0.55rem 1.4rem; }
+  .dot {
+    width: 38px; height: 38px; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--pill); color: var(--ink);
+    display: grid; place-items: center; text-decoration: none; font-size: 1rem;
+  }
+  .dot:hover { background: #fff; }
+  .pill.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .pill.ghost:hover { background: rgba(255,255,255,0.1); }
+
+  /* glass shapes */
+  .glass {
+    position: absolute; width: var(--s); aspect-ratio: 1; border-radius: 30%;
+    background: conic-gradient(from 210deg, #e8e6ff, #ffc7e6 18%, #ffe6a8 34%, #bff5e8 52%, #c4d2ff 70%, #f3d6ff 86%, #e8e6ff);
+    box-shadow: 0 0 44px rgba(170, 160, 255, 0.28), inset 0 0 12px rgba(255, 255, 255, 0.6);
+    transform: rotate(var(--r)); pointer-events: none; z-index: 1;
+    animation: float 9s ease-in-out infinite;
+  }
+  .glass::before { content: ""; position: absolute; inset: 21%; border-radius: 26%; background: #000; box-shadow: inset 0 0 14px rgba(255,255,255,0.25); }
+  .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(255,255,255,0.5), transparent 42%); }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(var(--r)); }
+    50% { transform: translateY(-12px) rotate(calc(var(--r) + 4deg)); }
+  }
+  @media (prefers-reduced-motion: reduce) { .glass { animation: none; } html { scroll-behavior: auto; } }
+
+  /* hero */
+  .hero { padding-block: 40px 70px; position: relative; }
+  .hero h1 { font-size: clamp(2.6rem, 9.5vw, 5.4rem); line-height: 0.98; letter-spacing: -0.02em; position: relative; z-index: 2; }
+  .hero h1 span { display: block; }
+  .hero h1 span:nth-child(1) { padding-left: 14%; }
+  .hero h1 span:nth-child(2) { padding-left: 22%; }
+  .hero h1 span:nth-child(3) { padding-left: 36%; }
+  .hero .sub { margin: 26px 0 22px 36%; max-width: 330px; font-size: 0.8rem; position: relative; z-index: 2; }
+
+  /* sections */
+  section { padding-block: 70px; position: relative; }
+  .sec-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 34px; position: relative; z-index: 2; }
+  .sec-head h2 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1; }
+  .sec-head p { max-width: 340px; font-size: 0.8rem; color: var(--muted); margin-top: 12px; }
+
+  /* about / stats */
+  .about { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; position: relative; z-index: 2; }
+  .about p { font-size: 0.85rem; max-width: 400px; margin-top: 16px; color: var(--muted); }
+  .stats { display: flex; gap: clamp(24px, 6vw, 64px); }
+  .stat b { display: block; font-family: var(--display); font-weight: 300; font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.1; }
+  .stat span { font-size: 0.75rem; color: var(--muted); }
+
+  /* rule cards */
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; position: relative; z-index: 2; }
+  .card {
+    border: 1px solid var(--line); border-radius: 22px; padding: 22px;
+    min-height: 210px; display: flex; flex-direction: column; justify-content: space-between; gap: 30px;
+  }
+  .num {
+    width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #000;
+    display: grid; place-items: center; font-size: 0.7rem; font-weight: 500;
+  }
+  .card h3 { font-size: 0.85rem; font-weight: 400; margin-bottom: 8px; }
+  .card p { font-size: 0.78rem; color: var(--muted); max-width: 380px; }
+  .card code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.78rem; color: var(--fg); }
+  .card.light { background: #fff; color: #000; border-color: #fff; }
+  .card.light .num { background: #000; color: #fff; }
+  .card.light p, .card.light code { color: #333; }
+
+  /* calculator */
+  .calc { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; position: relative; z-index: 2; }
+  .panel { border: 1px solid var(--line); border-radius: 22px; padding: clamp(18px, 4vw, 30px); }
+  .panel h3 { font-size: 1rem; margin-bottom: 20px; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  input {
+    width: 100%; background: transparent; color: var(--fg);
+    border: 1px solid var(--line); border-radius: 12px; padding: 0.75rem 0.9rem; font-size: 0.95rem;
+  }
+  input::placeholder { color: #666; }
+  input[aria-invalid="true"] { border-color: var(--err); }
+  .hint { font-size: 0.7rem; color: var(--muted); }
+  .actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; align-items: center; }
+  .msg { font-size: 0.78rem; color: var(--err); min-height: 1.2em; margin-top: 14px; }
+
+  .rows { display: grid; gap: 0; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.18); font-size: 0.85rem; }
+  .row span:first-child { color: var(--muted); }
+  .row.big { border-bottom: 0; padding-top: 20px; align-items: baseline; }
+  .row.big span:first-child { color: var(--fg); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.06em; }
+  .row.big span:last-child { font-family: var(--display); font-weight: 300; font-size: clamp(1.8rem, 5vw, 2.4rem); }
+  .total-line { border-top: 1px solid var(--line); margin-top: 6px; }
+
+  /* cta + footer */
+  .cta { text-align: center; padding-block: 90px; }
+  .cta h2 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1; position: relative; z-index: 2; }
+  .cta p { max-width: 340px; margin: 20px auto 22px; font-size: 0.8rem; color: var(--muted); position: relative; z-index: 2; }
+  footer { padding-block: 30px 50px; font-size: 0.72rem; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.18); }
+
+  @media (max-width: 760px) {
+    .hero h1 span:nth-child(1) { padding-left: 0; }
+    .hero h1 span:nth-child(2) { padding-left: 8%; }
+    .hero h1 span:nth-child(3) { padding-left: 16%; }
+    .hero .sub { margin-left: 0; }
+    .about, .calc, .cards { grid-template-columns: 1fr; }
+    .fields { grid-template-columns: 1fr; }
+    .links { display: none; }
+    .glass { opacity: 0.85; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HOME -->
+  <div class="wrap" id="home">
+    <nav>
+      <a class="logo" href="#home">Payroll.</a>
+      <div class="links">
+        <a href="#home">Home</a>
+        <a href="#rules">Rules</a>
+        <a href="#calculator">Calculator</a>
+        <a href="#about">About</a>
+      </div>
+      <a class="pill sm" href="#calculator">Calculate</a>
+    </nav>
+
+    <header class="hero">
+      <div class="glass" style="--s: 150px; --r: 18deg; right: 8%; top: 0;"></div>
+      <h1><span>Simple</span><span>Payroll</span><span>Calculator</span></h1>
+      <p class="sub">Estimate an employee's pay for a work period. Enter hours, pay rate, overtime and deductions to see gross pay and take-home pay.</p>
+      <div class="pill-row" style="margin-left:36%;">
+        <a class="pill ghost sm" href="#calculator" style="background: var(--pill); color: var(--ink);">Start calculating</a>
+        <a class="dot" href="#calculator" aria-label="Go to calculator">&rarr;</a>
+      </div>
+    </header>
+  </div>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="wrap">
+      <div class="glass" style="--s: 90px; --r: -12deg; left: 52%; top: 90px;"></div>
+      <div class="glass" style="--s: 130px; --r: 24deg; right: 2%; top: 150px;"></div>
+      <div class="about">
+        <div>
+          <h2 style="font-size: clamp(1.8rem, 5vw, 2.6rem);">About</h2>
+          <p>A quick tool for estimating pay over a work period. It works out regular pay, overtime pay, gross pay and take-home pay from the numbers you enter. Everything runs in your browser and nothing is saved or sent anywhere.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>4</b><span>Inputs</span></div>
+          <div class="stat"><b>2</b><span>Results</span></div>
+          <div class="stat"><b>1</b><span>Click</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section id="rules">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2>The rules</h2>
+          <p>These are the formulas used to compute every result.</p>
+        </div>
+        <div class="pill-row">
+          <a class="pill ghost sm" href="#calculator">Try it</a>
+          <a class="dot" href="#calculator" aria-label="Go to calculator">&rarr;</a>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="num">01</div>
+          <div>
+            <h3>Regular pay</h3>
+            <p><code>regular hours &times; hourly rate</code><br>Pay for the normal hours worked in the period.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="num">02</div>
+          <div>
+            <h3>Overtime pay</h3>
+            <p><code>overtime hours &times; hourly rate &times; multiplier</code><br>Overtime is paid at a higher rate. The multiplier defaults to 1.25 and you can change it.</p>
+          </div>
+        </div>
+        <div class="card light">
+          <div class="num">03</div>
+          <div>
+            <h3>Gross pay</h3>
+            <p><code>regular pay + overtime pay</code><br>Total earnings before any deductions.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="num">04</div>
+          <div>
+            <h3>Take-home pay</h3>
+            <p><code>gross pay &minus; deductions</code><br>What the employee receives. It never goes below zero.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section id="calculator">
+    <div class="wrap">
+      <div class="glass" style="--s: 110px; --r: 30deg; right: 4%; top: 10px;"></div>
+      <div class="sec-head">
+        <div>
+          <h2>Calculator</h2>
+          <p>Fill in the fields. Results update as you type.</p>
+        </div>
+      </div>
+
+      <div class="calc">
+        <form class="panel" id="form" novalidate>
+          <h3>Pay details</h3>
+          <div class="fields">
+            <div class="field full">
+              <label for="name">Employee name (optional)</label>
+              <input id="name" type="text" placeholder="e.g. Juan Dela Cruz" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="hours">Regular hours</label>
+              <input id="hours" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0">
+            </div>
+            <div class="field">
+              <label for="rate">Hourly pay rate (&#8369;)</label>
+              <input id="rate" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="field">
+              <label for="ot">Overtime hours</label>
+              <input id="ot" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0">
+            </div>
+            <div class="field">
+              <label for="mult">Overtime multiplier</label>
+              <input id="mult" type="number" inputmode="decimal" min="1" step="0.01" value="1.25">
+              <span class="hint">1.25 = 125% of the hourly rate</span>
+            </div>
+            <div class="field full">
+              <label for="ded">Total deductions (&#8369;)</label>
+              <input id="ded" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+              <span class="hint">Tax, contributions, loans, or any other amounts to subtract</span>
+            </div>
+          </div>
+          <div class="msg" id="msg" role="alert"></div>
+          <div class="actions">
+            <div class="pill-row">
+              <button class="pill" type="submit">Calculate</button>
+              <span class="dot" aria-hidden="true">&rarr;</span>
+            </div>
+            <button class="pill ghost" type="button" id="reset">Reset</button>
+          </div>
+        </form>
+
+        <div class="panel" aria-live="polite">
+          <h3 id="resultTitle">Results</h3>
+          <div class="rows">
+            <div class="row"><span>Regular pay</span><span id="rReg">&#8369;0.00</span></div>
+            <div class="row"><span>Overtime pay</span><span id="rOt">&#8369;0.00</span></div>
+            <div class="row total-line"><span>Gross pay</span><span id="rGross">&#8369;0.00</span></div>
+            <div class="row"><span>Deductions</span><span id="rDed">&minus;&#8369;0.00</span></div>
+            <div class="row big"><span>Take-home pay</span><span id="rNet">&#8369;0.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="wrap">
+      <div class="glass" style="--s: 120px; --r: -20deg; left: calc(50% - 60px); top: 70px; opacity: .8;"></div>
+      <h2>Need to run<br>another one?</h2>
+      <p>Change the numbers above or reset the form and start a new calculation.</p>
+      <div class="pill-row">
+        <a class="pill ghost sm" href="#calculator" style="background: var(--pill); color: var(--ink);">Back to calculator</a>
+        <a class="dot" href="#calculator" aria-label="Back to calculator">&uarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">Payroll Calculator &middot; Designed and built by Princes Joy Garcia &middot; Estimates only, not official payroll or tax advice.</div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var money = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
+  var ids = ["hours", "rate", "ot", "mult", "ded"];
+
+  function read(id) {
+    var raw = $(id).value.trim();
+    if (raw === "") return { value: 0, empty: true, bad: false };
+    var n = Number(raw);
+    var bad = !isFinite(n) || n < 0;
+    return { value: bad ? 0 : n, empty: false, bad: bad };
+  }
+
+  function calculate() {
+    var f = {};
+    var errors = [];
+    ids.forEach(function (id) {
+      f[id] = read(id);
+      $(id).setAttribute("aria-invalid", f[id].bad ? "true" : "false");
+      if (f[id].bad) errors.push("Enter a number of 0 or more for " + $(id).previousElementSibling.textContent.toLowerCase() + ".");
+    });
+
+    // Blank multiplier falls back to the default of 1.25
+    var mult = f.mult.empty ? 1.25 : f.mult.value;
+    if (!f.mult.bad && !f.mult.empty && mult < 1) {
+      errors.push("Overtime multiplier should be at least 1.");
+      $("mult").setAttribute("aria-invalid", "true");
+    }
+
+    var regular = f.hours.value * f.rate.value;
+    var overtime = f.ot.value * f.rate.value * mult;
+    var gross = regular + overtime;
+    var ded = f.ded.value;
+    var net = gross - ded;
+    if (net < 0) {
+      net = 0;
+      errors.push("Deductions are higher than gross pay, so take-home pay is shown as zero.");
+    }
+
+    $("rReg").textContent = money.format(regular);
+    $("rOt").textContent = money.format(overtime);
+    $("rGross").textContent = money.format(gross);
+    $("rDed").textContent = "\u2212" + money.format(ded);
+    $("rNet").textContent = money.format(net);
+
+    var name = $("name").value.trim();
+    $("resultTitle").textContent = name ? "Results for " + name : "Results";
+    $("msg").textContent = errors.join(" ");
+  }
+
+  ids.concat(["name"]).forEach(function (id) { $(id).addEventListener("input", calculate); });
+  $("form").addEventListener("submit", function (e) { e.preventDefault(); calculate(); });
+  $("reset").addEventListener("click", function () {
+    $("form").reset();
+    $("mult").value = "1.25";
+    calculate();
+  });
+  calculate();
+})();
+</script>
+</body>
+</html>
